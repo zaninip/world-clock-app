@@ -1,0 +1,10 @@
+flutter_launcher_icons:
+  android: true
+  ios: false
+  # Icona principale
+  image_path: "assets/icon.png"
+  # Icona adattiva per Android (si adatta alla forma rotonda/quadrata)
+  adaptive_icon_background: "#FFFFFF"  # Sfondo blu
+  adaptive_icon_foreground: "assets/icon.png"
+  # Rimuovi l'icona di default
+  remove_alpha_ios: true
