@@ -33,7 +33,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/screenshot5.jpeg" alt="World Clock Icon" width="300"/>
+  <img src="assets/screenshot5.jpeg" alt="World Clock Icon" width="600"/>
 </p>
 
 ---
