@@ -163,6 +163,6 @@ This project is open source and available under the [MIT License](LICENSE).
 
 **Paolo Zanini**
 
-📨 **Email:** [paolo.zanini86@gmail.com](mailto:paolo.zanini86@gmail.com)
+📨 **Email:** [paolodevapp@gmail.com](mailto:paolodevapp@gmail.com)
 
 💼 **LinkedIn:** [linkedin.com/in/paolo-zanini-7z](https://www.linkedin.com/in/paolo-zanini-7z/)
