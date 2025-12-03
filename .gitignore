@@ -12,6 +12,7 @@
 .swiftpm/
 migrate_working_dir/
 world-clock.apk
+descriptions.md
 assets/banner.png
 
 # IntelliJ related
