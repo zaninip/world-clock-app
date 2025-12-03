@@ -25,7 +25,16 @@
 ## 📱 Screenshots
 
 
-<em>Screenshots coming soon!</em>
+<p align="center">
+  <img src="assets/screenshot1.jpeg" alt="World Clock Icon" width="150"/>
+  <img src="assets/screenshot2.jpeg" alt="World Clock Icon" width="150"/>
+  <img src="assets/screenshot3.jpeg" alt="World Clock Icon" width="150"/>
+  <img src="assets/screenshot4.jpeg" alt="World Clock Icon" width="150"/>
+</p>
+
+<p align="center">
+  <img src="assets/screenshot5.jpeg" alt="World Clock Icon" width="300"/>
+</p>
 
 ---
 
