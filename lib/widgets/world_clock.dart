@@ -81,6 +81,16 @@ class _WorldClockState extends State<WorldClock> {
     return '$day$ordinal $month $year';
   }
 
+  String _getTimezoneAbbreviation() {
+    try {
+      final location = tz.getLocation(widget.timezone);
+      final now = tz.TZDateTime.now(location);
+      return now.timeZoneName;
+    } catch (e) {
+      return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return OrientationBuilder(
@@ -153,7 +163,7 @@ class _WorldClockState extends State<WorldClock> {
             ),
             const SizedBox(height: 10),
             Text(
-              widget.timezone,
+              '${widget.timezone.replaceAll('_', ' ')} (${_getTimezoneAbbreviation()})',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.white70,
@@ -238,7 +248,7 @@ class _WorldClockState extends State<WorldClock> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    widget.timezone,
+                    '${widget.timezone.replaceAll('_', ' ')} (${_getTimezoneAbbreviation()})',
                     style: const TextStyle(
                       fontSize: 16,
                       color: Colors.white70,
