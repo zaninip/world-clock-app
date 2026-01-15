@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
@@ -11,22 +12,22 @@ class LocationService {
       // Controlla se i servizi di localizzazione sono abilitati
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        print('Servizi di localizzazione disabilitati');
+        debugPrint('Servizi di localizzazione disabilitati');
         return 'UTC'; // Fallback a Greenwich
       }
 
       // Controlla i permessi
       LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
+        if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          print('Permesso di localizzazione negato');
+          debugPrint('Permesso di localizzazione negato');
           return 'UTC'; // Fallback a Greenwich
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        print('Permesso di localizzazione negato permanentemente');
+        debugPrint('Permesso di localizzazione negato permanentemente');
         return 'UTC'; // Fallback a Greenwich
       }
 
@@ -35,7 +36,7 @@ class LocationService {
         desiredAccuracy: LocationAccuracy.low,
       );
 
-      print('Posizione ottenuta: ${position.latitude}, ${position.longitude}');
+      debugPrint('Posizione ottenuta: ${position.latitude}, ${position.longitude}');
 
       // Usa l'API di GeoNames per ottenere il timezone preciso
       final timezone = await _getTimezoneFromAPI(
@@ -43,10 +44,10 @@ class LocationService {
         position.longitude,
       );
 
-      print('Timezone locale trovato: $timezone');
+      debugPrint('Timezone locale trovato: $timezone');
       return timezone;
     } catch (e) {
-      print('Errore nell\'ottenere la posizione: $e');
+      debugPrint('Errore nell\'ottenere la posizione: $e');
       return 'UTC'; // Fallback a Greenwich
     }
   }
@@ -61,7 +62,7 @@ class LocationService {
         '&username=$_geonamesUsername'
       );
 
-      print('Chiamata API timezone: $url');
+      debugPrint('Chiamata API timezone: $url');
 
       final response = await http.get(url);
 
@@ -69,21 +70,21 @@ class LocationService {
         final data = json.decode(response.body);
         
         if (data['status'] != null) {
-          print('Errore API GeoNames: ${data['status']['message']}');
+          debugPrint('Errore API GeoNames: ${data['status']['message']}');
           return 'UTC';
         }
 
         final timezoneId = data['timezoneId'];
         if (timezoneId != null && timezoneId.isNotEmpty) {
-          print('Timezone trovato dall\'API: $timezoneId');
+          debugPrint('Timezone trovato dall\'API: $timezoneId');
           return timezoneId;
         }
       }
 
-      print('Fallback a UTC - response: ${response.body}');
+      debugPrint('Fallback a UTC - response: ${response.body}');
       return 'UTC';
     } catch (e) {
-      print('Errore nell\'ottenere timezone da API: $e');
+      debugPrint('Errore nell\'ottenere timezone da API: $e');
       return 'UTC';
     }
   }

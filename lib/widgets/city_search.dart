@@ -33,9 +33,9 @@ class _CitySearchState extends State<CitySearch> {
       _isSearching = true;
     });
 
-    print('Ricerca città: $query');  // Debug
+    debugPrint('Ricerca città: $query'); // Debug
     final results = await CityService.searchCities(query);
-    print('Risultati trovati: ${results.length}');  // Debug
+    debugPrint('Risultati trovati: ${results.length}'); // Debug
 
     setState(() {
       _suggestions = results;

@@ -209,10 +209,12 @@ class _WorldClockPageState extends State<WorldClockPage> {
       barrierDismissible: true,
       builder: (BuildContext context) {
         // Auto-chiudi dopo 2 secondi
+        final navigator = Navigator.of(context);
+        final focus = FocusScope.of(context);
         Future.delayed(const Duration(seconds: 2), () {
-          if (Navigator.canPop(context)) {
-            Navigator.of(context).pop();
-            FocusScope.of(this.context).unfocus(); // Assicurati che la tastiera rimanga chiusa
+          if (navigator.canPop()) {
+            navigator.pop();
+            focus.unfocus(); // Assicurati che la tastiera rimanga chiusa
           }
         });
 
@@ -280,8 +282,10 @@ class _WorldClockPageState extends State<WorldClockPage> {
         _isShowingDialog = false;
       });
       // Chiudi la tastiera anche quando l'utente chiude manualmente il dialog
+      if (!mounted) return;
+      final focusThen = FocusScope.of(context);
       Future.delayed(const Duration(milliseconds: 100), () {
-        FocusScope.of(context).unfocus();
+        focusThen.unfocus();
       });
     });
   }

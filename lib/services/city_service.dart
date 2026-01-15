@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/city.dart';
 
@@ -46,8 +47,8 @@ class CityService {
         return [];
       }
     } catch (e, stackTrace) {
-      print('Errore nella ricerca città: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('Errore nella ricerca città: $e');
+      debugPrint('Stack trace: $stackTrace');
       return [];
     }
   }
