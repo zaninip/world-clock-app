@@ -187,74 +187,93 @@ class _WorldClockState extends State<WorldClock> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Parte sinistra: Nome città + Orologio
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Nome città + stella
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        widget.cityName,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      if (!widget.isLocalTime)
-                        IconButton(
-                          onPressed: widget.onToggleFavorite,
-                          icon: Icon(
-                            widget.isFavorite ? Icons.star : Icons.star_border,
-                            color: Colors.yellow,
-                            size: 28,
+              // Parte sinistra: Nome città + Orologio (flessibile)
+              Flexible(
+                flex: 1,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Nome città + stella
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            widget.cityName,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  AnalogClock(
-                    dateTime: _currentDateTime,
-                    size: 170,
-                  ),
-                ],
+                        if (!widget.isLocalTime)
+                          IconButton(
+                            onPressed: widget.onToggleFavorite,
+                            icon: Icon(
+                              widget.isFavorite ? Icons.star : Icons.star_border,
+                              color: Colors.yellow,
+                              size: 28,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    AnalogClock(
+                      dateTime: _currentDateTime,
+                      size: 170,
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(width: 40),
-              // Parte destra: Ora digitale + Timezone
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _currentDate,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
+              const SizedBox(width: 24),
+              // Parte destra: Ora digitale + Timezone (flessibile)
+              Flexible(
+                flex: 1,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _currentDate,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    _currentTime,
-                    style: const TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 2,
+                    const SizedBox(height: 10),
+                    Flexible(
+                      child: Text(
+                        _currentTime,
+                        style: const TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 2,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    '${widget.timezone.replaceAll('_', ' ')} (${_getTimezoneAbbreviation()})',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
+                    const SizedBox(height: 10),
+                    Flexible(
+                      child: Text(
+                        '${widget.timezone.replaceAll('_', ' ')} (${_getTimezoneAbbreviation()})',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.white70,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),

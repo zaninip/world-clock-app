@@ -40,31 +40,37 @@ class _WorldClockPageState extends State<WorldClockPage> {
   String _currentCityName = 'Greenwich Time';
   bool _isLoadingLocation = true;
   bool _isFavorite = false;
-  bool _isLocalTime = true;  // Flag per sapere se stiamo mostrando l'ora locale
+  bool _isLocalTime = true; // Flag per sapere se stiamo mostrando l'ora locale
   bool _isShowingDialog = false;
+
+  List<City> _favorites = [];
+  City? _transientCity; // città selezionata ma non ancora salvata
+  late PageController _pageController;
+  int _currentPageIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: 0);
     _loadInitialTime();
   }
 
   /// Carica l'ora iniziale: prima controlla i preferiti, poi l'ora locale
   Future<void> _loadInitialTime() async {
-    // 1. Controlla se c'è una città preferita
-    final favoriteCity = await FavoritesService.getFavoriteCity();
-    
-    if (favoriteCity != null) {
-      // C'è una città preferita, mostrala
+    final favorites = await FavoritesService.getFavorites();
+    if (favorites.isNotEmpty) {
       setState(() {
-        _currentTimezone = favoriteCity.timezone;
-        _currentCityName = favoriteCity.name;
+        _favorites = favorites;
+        _currentPageIndex = 0;
+        _transientCity = null;
+        _currentTimezone = _favorites[0].timezone;
+        _currentCityName = _favorites[0].name;
         _isFavorite = true;
         _isLocalTime = false;
         _isLoadingLocation = false;
+        _pageController = PageController(initialPage: _currentPageIndex);
       });
     } else {
-      // Nessun preferito, mostra l'ora locale
       await _loadLocalTimezone();
     }
   }
@@ -78,25 +84,47 @@ class _WorldClockPageState extends State<WorldClockPage> {
       _isFavorite = false;
       _isLocalTime = true;
       _isLoadingLocation = false;
+      _favorites = [];
+      _transientCity = null;
     });
   }
 
   /// Quando l'utente seleziona una città dalla ricerca
   Future<void> _onCitySelected(City city) async {
-    // Controlla se questa città è già nei preferiti
     final isFav = await FavoritesService.isFavorite(city.name, city.timezone);
-    
+
+    if (isFav) {
+      final idx = _favorites.indexWhere((c) => c.isSameAs(city.name, city.timezone));
+      if (idx >= 0) {
+        setState(() {
+          _transientCity = null;
+          _currentPageIndex = idx;
+          _currentTimezone = _favorites[idx].timezone;
+          _currentCityName = _favorites[idx].name;
+          _isFavorite = true;
+          _isLocalTime = false;
+        });
+        // Usa jumpToPage per evitare l'animazione visibile che scorre attraverso tutte le pagine
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _pageController.jumpToPage(idx);
+          }
+        });
+        return;
+      }
+    }
+
     setState(() {
+      _transientCity = city;
       _currentTimezone = city.timezone;
       _currentCityName = city.name;
-      _isFavorite = isFav;
+      _isFavorite = false;
       _isLocalTime = false;
     });
   }
 
   /// Toggle preferito (aggiungi/rimuovi)
   Future<void> _toggleFavorite() async {
-  
     FocusScope.of(context).unfocus(); // Chiudi la tastiera PRIMA di fare qualsiasi altra cosa
 
     if (_isLocalTime) {
@@ -106,22 +134,64 @@ class _WorldClockPageState extends State<WorldClockPage> {
     }
 
     if (_isFavorite) {
-      // Rimuovi dai preferiti
-      await FavoritesService.removeFavoriteCity();
-      setState(() {
-        _isFavorite = false;
-      });
+      // Rimuovi dai preferiti la città corrente
+      final name = _transientCity?.name ?? _currentCityName;
+      final timezone = _transientCity?.timezone ?? _currentTimezone;
+      await FavoritesService.removeFavoriteCity(name, timezone);
+      final updated = await FavoritesService.getFavorites();
+
+      if (updated.isEmpty) {
+        // Nessun preferito rimasto: mostra subito Local Time (non bloccare l'UI)
+        setState(() {
+          _favorites = [];
+          _transientCity = null;
+          _isFavorite = false;
+          _isLocalTime = true;
+          _isLoadingLocation = false; // non mostrare spinner; aggiorneremo in background
+          _currentCityName = 'Local Time';
+        });
+        // Carica il timezone locale in background e aggiorna quando disponibile
+        _loadLocalTimezone();
+      } else {
+        setState(() {
+          _favorites = updated;
+          _transientCity = null;
+          _currentPageIndex = _currentPageIndex.clamp(0, _favorites.length - 1);
+          _currentTimezone = _favorites[_currentPageIndex].timezone;
+          _currentCityName = _favorites[_currentPageIndex].name;
+          _isFavorite = true;
+          _isLocalTime = false;
+        });
+        _pageController.jumpToPage(_currentPageIndex);
+      }
       _showMessage('Favorite removed');
     } else {
-      // Aggiungi ai preferiti
-      final city = City(
-        name: _currentCityName,
-        country: '', // Non abbiamo bisogno del paese per i preferiti
-        timezone: _currentTimezone,
-      );
-      await FavoritesService.saveFavoriteCity(city);
+      // Aggiungi ai preferiti la città corrente (transient o corrente)
+      final city = _transientCity ?? City(name: _currentCityName, country: '', timezone: _currentTimezone);
+      final added = await FavoritesService.saveFavoriteCity(city);
+      if (!added) {
+        _showMessage('Maximum 5 favorites allowed');
+        return;
+      }
+
+      final updated = await FavoritesService.getFavorites();
       setState(() {
+        _favorites = updated;
         _isFavorite = true;
+        _transientCity = null;
+        // Dopo l'aggiunta, porta l'indice all'ultimo elemento (il nuovo favorito)
+        _currentPageIndex = _favorites.length - 1;
+        if (_currentPageIndex < 0) _currentPageIndex = 0;
+        _currentTimezone = _favorites[_currentPageIndex].timezone;
+        _currentCityName = _favorites[_currentPageIndex].name;
+        _isLocalTime = false;
+      });
+      // Assicura che la PageView sia già rebuildata prima di animare
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          // Usa jumpToPage per evitare l'animazione visibile che scorre attraverso tutte le pagine
+          _pageController.jumpToPage(_currentPageIndex);
+        }
       });
       _showMessage('New favorite location selected');
     }
@@ -131,9 +201,9 @@ class _WorldClockPageState extends State<WorldClockPage> {
   void _showMessage(String message) {
     FocusScope.of(context).unfocus(); // Chiudi la tastiera PRIMA di aprire il dialog
     setState(() {
-      _isShowingDialog = true;  // 👈 Disabilita il TextField
+      _isShowingDialog = true; // 👈 Disabilita il TextField
     });
-    
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -216,9 +286,86 @@ class _WorldClockPageState extends State<WorldClockPage> {
     });
   }
 
+  Widget _buildClockArea() {
+    if (_transientCity != null) {
+      return WorldClock(
+        timezone: _transientCity!.timezone,
+        cityName: _transientCity!.name,
+        isFavorite: false,
+        isLocalTime: false,
+        onToggleFavorite: _toggleFavorite,
+      );
+    }
+
+    if (_favorites.isNotEmpty) {
+      return Column(
+        children: [
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _favorites.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPageIndex = index;
+                  _currentTimezone = _favorites[index].timezone;
+                  _currentCityName = _favorites[index].name;
+                  _isFavorite = true;
+                  _isLocalTime = false;
+                });
+              },
+              itemBuilder: (context, index) {
+                final city = _favorites[index];
+                return WorldClock(
+                  timezone: city.timezone,
+                  cityName: city.name,
+                  isFavorite: true,
+                  isLocalTime: false,
+                  onToggleFavorite: _toggleFavorite,
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Dots indicator
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_favorites.length, (i) {
+              final selected = i == _currentPageIndex;
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                width: selected ? 12 : 8,
+                height: selected ? 12 : 8,
+                decoration: BoxDecoration(
+                  color: selected ? Colors.white : Colors.white54,
+                  shape: BoxShape.circle,
+                ),
+              );
+            }),
+          ),
+        ],
+      );
+    }
+
+    // Nessun preferito: mostra orario locale
+    return WorldClock(
+      timezone: _currentTimezone,
+      cityName: _currentCityName,
+      isFavorite: _isFavorite,
+      isLocalTime: _isLocalTime,
+      onToggleFavorite: _toggleFavorite,
+    );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -240,13 +387,7 @@ class _WorldClockPageState extends State<WorldClockPage> {
                   Expanded(
                     child: _isLoadingLocation
                         ? const Center(child: CircularProgressIndicator())
-                        : WorldClock(
-                            timezone: _currentTimezone,
-                            cityName: _currentCityName,
-                            isFavorite: _isFavorite,
-                            isLocalTime: _isLocalTime,
-                            onToggleFavorite: _toggleFavorite,
-                          ),
+                        : _buildClockArea(),
                   ),
                 ],
               ),
@@ -263,6 +404,36 @@ class _WorldClockPageState extends State<WorldClockPage> {
                   ),
                 ),
               ),
+              // Shortcut: vai ai preferiti (mostra solo quando esiste almeno un favorito
+              // e stiamo visualizzando una città non salvata - ovvero _transientCity != null)
+              if (_favorites.isNotEmpty && _transientCity != null)
+                Positioned(
+                  top: 80,
+                  right: 20,
+                  child: Semantics(
+                    label: 'Go to favorites',
+                    button: true,
+                    child: FloatingActionButton.small(
+                      onPressed: () {
+                        FocusScope.of(context).unfocus();
+                        setState(() {
+                          _currentPageIndex = 0;
+                          _currentTimezone = _favorites[0].timezone;
+                          _currentCityName = _favorites[0].name;
+                          _isFavorite = true;
+                          _isLocalTime = false;
+                          _transientCity = null;
+                        });
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) _pageController.jumpToPage(0);
+                        });
+                      },
+                      backgroundColor: Colors.blue.shade800.withValues(alpha: 0.95),
+                      elevation: 4,
+                      child: Icon(Icons.star, color: Colors.yellow[700]),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
