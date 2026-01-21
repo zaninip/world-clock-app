@@ -1,6 +1,6 @@
 # Privacy Policy for World Clock App
 
-**Last updated:** December 1, 2025
+**Last updated:** January 20, 2026 (version 1.0.1+2)
 
 ## Information We Collect
 

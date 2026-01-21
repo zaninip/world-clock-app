@@ -1,5 +1,7 @@
 # 🌍 World Clock App
 
+**Release:** version 1.0.1+2 — Last updated January 20, 2026
+
 <p align="left">
   <img src="assets/icon.png" alt="World Clock Icon" width="200"/>
 </p>
