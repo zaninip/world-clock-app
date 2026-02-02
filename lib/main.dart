@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'models/city.dart';
 import 'services/location_service.dart';
@@ -7,6 +8,8 @@ import 'widgets/city_search.dart';
 import 'widgets/world_clock.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   tz.initializeTimeZones();
   runApp(const MyApp());
 }
@@ -22,6 +25,12 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
+        appBarTheme: AppBarTheme(
+          systemOverlayStyle: SystemUiOverlayStyle.light.copyWith(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.light,
+          ),
+        ),
       ),
       home: const WorldClockPage(),
     );
